@@ -52,6 +52,10 @@ app.post('/register', function(req, res) {
 
 });
 
+app.get('/menu', function(req, res) {
+    res.send([{name:"Popcorn", price:5.5},{name:"Coffee", price:0.25},{name:"BigMac", price:5}]);
+});
+
 app.listen(app.get('port'), function() {
   console.log('Server started: http://localhost:' + app.get('port') + '/');
 });
