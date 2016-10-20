@@ -14,7 +14,7 @@ var clientOptions = {
     hooks: {
         beforeSave: function(next) {
             var _this = this;
-            
+
             _this.uuid = uuid.v1();
             _this.pin = Math.floor(1000 + Math.random() * 9000);
 

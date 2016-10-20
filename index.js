@@ -4,6 +4,9 @@ var bodyParser  = require('body-parser');
 var config      = require('./config');
 var app         = express();
 var Client      = require('./models/client');
+var Order       = require('./models/order');
+var Product     = require('./models/product');
+var Voucher     = require('./models/voucher');
 
 app.set('port', (process.env.PORT || 8080));
 
@@ -23,6 +26,11 @@ app.use(bodyParser.json());
 app.use(orm.express(config.database, {
     define: function (db, models, next) {
         models.client = db.define("client", Client.clientModel, Client.clientOptions);
+        models.client = db.define("product", Product.productModel);
+        models.client = db.define("order", Order.orderModel);
+        models.client = db.define("voucher", Voucher.voucherModel, Voucher.voucherOptions);
+
+        models.order
         db.sync();
         next();
     }
