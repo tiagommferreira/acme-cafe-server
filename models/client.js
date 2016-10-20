@@ -7,7 +7,8 @@ var clientModel = {
     name:       {type: 'text'},
     username:   {type: 'text'},
     pin:        {type: 'integer', size: 4},
-    creditcard: {type: 'text'}
+    creditcard: {type: 'text'},
+    status:     {type: 'boolean'}
 }
 
 var clientOptions = {
