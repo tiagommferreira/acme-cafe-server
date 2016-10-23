@@ -26,11 +26,10 @@ app.use(bodyParser.json());
 app.use(orm.express(config.database, {
     define: function (db, models, next) {
         models.client = db.define("client", Client.clientModel, Client.clientOptions);
-        models.client = db.define("product", Product.productModel);
-        models.client = db.define("order", Order.orderModel);
-        models.client = db.define("voucher", Voucher.voucherModel, Voucher.voucherOptions);
+        models.product = db.define("product", Product.productModel);
+        models.order = db.define("order", Order.orderModel);
+        models.voucher = db.define("voucher", Voucher.voucherModel, Voucher.voucherOptions);
 
-        models.order
         db.sync();
         next();
     }
@@ -61,7 +60,7 @@ app.post('/register', function(req, res) {
 });
 
 app.get('/menu', function(req, res) {
-    res.send([{name:"Popcorn", price:5.5},{name:"Coffee", price:0.25},{name:"BigMac", price:5}]);
+    res.send([{id:1, name:"Popcorn", price:5.5},{id:2, name:"Coffee", price:0.25},{id:3,name:"BigMac", price:5}]);
 });
 
 app.listen(app.get('port'), function() {

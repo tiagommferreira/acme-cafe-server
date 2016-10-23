@@ -18,6 +18,7 @@ var clientOptions = {
 
             _this.uuid = uuid.v1();
             _this.pin = Math.floor(1000 + Math.random() * 9000);
+            _this.status = true;
 
             bcrypt.genSalt(10, function (err, salt) {
                 if (err) {
