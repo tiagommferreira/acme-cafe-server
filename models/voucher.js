@@ -11,7 +11,7 @@ var voucherOptions = {
         beforeSave: function(next) {
             var _this = this;
 
-            this.signature = "";
+            _this.signature = "";
         }
     }
 }
