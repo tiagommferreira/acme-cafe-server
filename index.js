@@ -36,7 +36,7 @@ app.use(orm.express(config.database, {
 }));
 
 app.get('/', function(req, res) {
-    res.json({success: true});
+    res.json("{success: false}");
 });
 
 app.post('/register', function(req, res) {
@@ -64,7 +64,7 @@ app.get('/menu', function(req, res) {
 });
 
 app.get('/vouchers/:uuid', function(req, res) {
-    res.send([{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:8794, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Coffee", type:2, user_id:1, signature:"dsfdsf"}]);   
+    res.send([{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:8794, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Coffee", type:2, user_id:1, signature:"dsfdsf"}]);
 });
 
 app.listen(app.get('port'), function() {
