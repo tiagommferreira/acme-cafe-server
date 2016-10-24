@@ -73,5 +73,15 @@ app.listen(app.get('port'), function() {
 
 
 app.post('/order', function(req,res) {
-    res.json(req.body);
+
+  req.body.products.forEach(function(orderItem){
+    var newOrder = {
+        user_id: orderItem.uuid,
+        product_id: orderItem.product_id,
+        order_id: orderItem.order_id,
+    }
+    req.models.order.create(newOrder,function(err,results){
+      res.json(results);
+    });
+  })
 });
