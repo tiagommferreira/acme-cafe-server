@@ -6,6 +6,7 @@ var clientModel = {
     uuid:       {type: 'text', unique: true},
     name:       {type: 'text'},
     username:   {type: 'text'},
+    password:   {type: 'text'},
     pin:        {type: 'integer', size: 4},
     creditcard: {type: 'text'},
     status:     {type: 'boolean'}
