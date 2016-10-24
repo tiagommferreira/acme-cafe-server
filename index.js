@@ -70,3 +70,8 @@ app.get('/vouchers/:uuid', function(req, res) {
 app.listen(app.get('port'), function() {
   console.log('Server started: http://localhost:' + app.get('port') + '/');
 });
+
+
+app.post('/order', function(req,res) {
+    res.json(req.body);
+});
