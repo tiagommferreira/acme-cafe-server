@@ -85,3 +85,9 @@ app.post('/order', function(req,res) {
     });
   })
 });
+
+app.get('/order',function(req,res) {
+  req.models.order.find(null,function(err,results){
+    res.json(results)
+  });
+});
