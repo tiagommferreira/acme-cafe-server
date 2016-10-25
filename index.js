@@ -36,7 +36,7 @@ app.use(orm.express(config.database, {
 }));
 
 app.get('/', function(req, res) {
-    res.json("{success: false}");
+    res.json({success: true});
 });
 
 app.post('/register', function(req, res) {
@@ -60,17 +60,19 @@ app.post('/register', function(req, res) {
 });
 
 app.get('/menu', function(req, res) {
-    res.send([{id:1, name:"Popcorn", price:5.5},{id:2, name:"Coffee", price:0.25},{id:3,name:"BigMac", price:5},{id:1, name:"Popcorn", price:5.5},{id:2, name:"Coffee", price:0.25},{id:3,name:"BigMac", price:5},{id:1, name:"Popcorn", price:5.5},{id:2, name:"Coffee", price:0.25},{id:3,name:"BigMac", price:5},{id:1, name:"Popcorn", price:5.5},{id:2, name:"Coffee", price:0.25},{id:3,name:"BigMac", price:5}]);
+    req.models.product.all(function(err,results){
+        if(err) {
+            res.send({success: false});
+        }
+        else {
+            res.send(results);
+        }
+    });
 });
 
 app.get('/vouchers/:uuid', function(req, res) {
     res.send([{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:8794, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Coffee", type:2, user_id:1, signature:"dsfdsf"}]);
 });
-
-app.listen(app.get('port'), function() {
-  console.log('Server started: http://localhost:' + app.get('port') + '/');
-});
-
 
 app.post('/order', function(req,res) {
 
@@ -84,4 +86,9 @@ app.post('/order', function(req,res) {
       res.json(results);
     });
   })
+});
+
+
+app.listen(app.get('port'), function() {
+  console.log('Server started: http://localhost:' + app.get('port') + '/');
 });
