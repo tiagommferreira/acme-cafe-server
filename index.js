@@ -74,6 +74,13 @@ app.get('/vouchers/:uuid', function(req, res) {
     res.send([{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:8794, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:5454, name:"Free Coffee", type:2, user_id:1, signature:"dsfdsf"}]);
 });
 
+app.get('/order',function(req,res) {
+  req.models.order.find(null,function(err,results){
+    res.json(results)
+  });
+});
+
+
 app.post('/order', function(req,res) {
 
   req.body.products.forEach(function(orderItem){
@@ -87,6 +94,7 @@ app.post('/order', function(req,res) {
     });
   })
 });
+
 
 
 app.listen(app.get('port'), function() {
