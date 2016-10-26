@@ -52,7 +52,7 @@ app.post('/register', function(req, res) {
             console.log(err);
             res.send({success:false});
         }
-        else {
+        else { 
             res.send({uuid: results.uuid, pin: results.pin});
         }
     });
