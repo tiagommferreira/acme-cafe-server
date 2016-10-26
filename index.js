@@ -88,9 +88,15 @@ app.post('/order', function(req,res) {
         user_id: orderItem.uuid,
         product_id: orderItem.product_id,
         order_id: orderItem.order_id,
+        quantity: orderItem.quantity
     }
     req.models.order.create(newOrder,function(err,results){
-      res.json(results);
+      if(err) {
+        res.send('Something went wrong');
+      }
+      else {
+        res.json(results);
+      }
     });
   })
 });
