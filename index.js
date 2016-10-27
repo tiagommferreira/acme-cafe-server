@@ -75,7 +75,7 @@ app.get('/vouchers/:uuid', function(req, res) {
 });
 
 app.get('/order',function(req,res) {
-  req.models.order.find(null,function(err,results){
+  req.models.order.all(function(err,results){
     res.json(results)
   });
 });
@@ -94,14 +94,46 @@ app.post('/order', function(req,res) {
       if(err) {
         res.send('Something went wrong');
       }
-      else {
-        res.json(results);
-      }
     });
-  })
+  });
+
+  res.send({success: true});
+
 });
 
 
+app.get('/client/:uuid/total', function(req, res) {
+    var client_uuid = req.params.uuid;
+
+    req.models.order.find({user_id: client_uuid}, function(err, results){
+        if(err) {
+            res.send(err);
+        }
+        else {
+            req.models.product.all(function(prodErr, prodResults){
+                if(prodErr) {
+                    res.send(prodErr);
+                }
+                else {
+                    var total = 0;
+                    
+                    results.forEach(function(result) {
+
+                        var product = prodResults.find(function(element){
+                            return element.id === result.product_id;
+                        });
+
+                        total += product.price * result.quantity;
+                        
+                    });
+
+                    res.send({total: total});
+                }
+            }); 
+        }
+    });
+
+}); 
 
 app.listen(app.get('port'), function() {
   console.log('Server started: http://localhost:' + app.get('port') + '/');
