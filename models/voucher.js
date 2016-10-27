@@ -3,19 +3,11 @@ var voucherModel = {
     name:          {type: 'text'},
     type:          {type: 'integer'},
     user_id:       {type: 'text'},
+    order_id:      {type: 'integer'},
     signature:     {type: 'text'}
 }
 
-var voucherOptions = {
-    hooks: {
-        beforeSave: function(next) {
-            var _this = this;
-
-            _this.signature = "";
-        }
-    }
-}
 
 module.exports = {
-    voucherModel, voucherOptions
+    voucherModel
 }

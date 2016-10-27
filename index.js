@@ -7,6 +7,36 @@ var Client      = require('./models/client');
 var Order       = require('./models/order');
 var Product     = require('./models/product');
 var Voucher     = require('./models/voucher');
+var cp          = require('child_process');
+var assert      = require('assert');
+var fs          = require('fs');
+var crypto      = require('crypto');
+
+
+// gen pub priv key pair
+function genKeys(cb){
+    // gen private
+    cp.exec('openssl genrsa 368', function(err, priv, stderr) {
+      // tmp file
+      var randomfn = './' + Math.random().toString(36).substring(7);
+      fs.writeFileSync(randomfn, priv);
+      // gen public
+      cp.exec('openssl rsa -in '+randomfn+' -pubout', function(err, pub, stderr) {
+           // delete tmp file
+           fs.unlinkSync(randomfn);
+           // callback
+           cb(JSON.stringify({public: pub, private: priv}, null, 4));
+      });
+
+    });
+}
+
+var keys;
+genKeys(function(result) {
+    keys = JSON.parse(result);
+    console.log(keys);
+});
+
 
 app.set('port', (process.env.PORT || 8080));
 
@@ -28,7 +58,7 @@ app.use(orm.express(config.database, {
         models.client = db.define("client", Client.clientModel, Client.clientOptions);
         models.product = db.define("product", Product.productModel);
         models.order = db.define("order", Order.orderModel);
-        models.voucher = db.define("voucher", Voucher.voucherModel, Voucher.voucherOptions);
+        models.voucher = db.define("voucher", Voucher.voucherModel);
 
         db.sync();
         next();
@@ -71,7 +101,10 @@ app.get('/menu', function(req, res) {
 });
 
 app.get('/vouchers/:uuid', function(req, res) {
-    res.send([{voucher_id:5454, name:"Free Popcorn", type:1, user_id:1, signature:"lsndlkasndla"},{voucher_id:4545, name:"Free Coffee", type:2, user_id:1, signature:"dsfdsf"}]);
+    var uuid = req.params.uuid;
+    req.models.voucher.find({user_id: uuid, order_id: null}, function(err, results) {
+        res.send(results);
+    });
 });
 
 app.get('/order',function(req,res) {
@@ -80,24 +113,61 @@ app.get('/order',function(req,res) {
   });
 });
 
-
 app.post('/order', function(req,res) {
+    var order_id = req.body.products[0].order_id;
+    var uuid = req.body.products[0].uuid;
+    var total_price = req.body.products[0].total_price;
+    
+    var verify = crypto.createVerify('sha1WithRSAEncryption');
 
-  req.body.products.forEach(function(orderItem){
-    var newOrder = {
-        user_id: orderItem.uuid,
-        product_id: orderItem.product_id,
-        order_id: orderItem.order_id,
-        quantity: orderItem.quantity
-    }
-    req.models.order.create(newOrder,function(err,results){
-      if(err) {
-        res.send('Something went wrong');
-      }
+    req.body.vouchers.forEach(function(voucher) {
+        var toVerify = {
+            name: voucher.name,
+            type: voucher.type,
+            user_id: voucher.user_id,
+            order_id: null,
+            voucher_id: voucher.voucher_id,
+        }
+
+        verify.update(JSON.stringify(toVerify));
+
+        if(verify.verify(keys.public, voucher.signature, 'base64')) {
+            req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
+                results[0].order_id = voucher.order_id;
+                results[0].save(function(err){
+
+                });
+            });
+        }
+        else {
+            console.log("not legit signature");
+            //res.send('Error validating signature');
+            //TODO: set user to black list
+            return;
+        }
     });
-  });
 
-  res.send({success: true});
+    req.body.products.forEach(function(orderItem){
+        var newOrder = {
+            user_id: orderItem.uuid,
+            product_id: orderItem.product_id,
+            order_id: orderItem.order_id,
+            quantity: orderItem.quantity
+        }
+        req.models.order.create(newOrder,function(err,results){
+            if(err) {
+                res.send('Something went wrong');
+            }
+            else {
+            }
+        });
+    });
+
+    if(total_price > 20) {
+        generateVoucher(req.models.voucher, Math.floor(Math.random()*(2-1+1)+1), uuid);
+    }
+
+    res.send({success: true});
 
 });
 
@@ -134,6 +204,29 @@ app.get('/client/:uuid/total', function(req, res) {
     });
 
 }); 
+
+
+function generateVoucher(model, type, user_id) {
+    const sign = crypto.createSign('sha1WithRSAEncryption');
+
+    var name = type === 1 ? "Free Popcorn" : "Free Coffee";
+
+    var voucher = {
+        name: name,
+        type: type,
+        user_id: user_id,
+        order_id: null,
+    }
+
+    voucher.voucher_id = Math.floor(Math.random()*(1000-1+1)+1) + Math.floor(Math.random()*(500-100+1)+100);;
+
+    sign.update(JSON.stringify(voucher));
+    voucher.signature = sign.sign(keys.private,'base64');
+
+    model.create(voucher, function(err,results) {
+    
+    });
+}
 
 app.listen(app.get('port'), function() {
   console.log('Server started: http://localhost:' + app.get('port') + '/');
