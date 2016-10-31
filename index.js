@@ -134,7 +134,7 @@ app.post('/order', function(req,res) {
     var order_id = req.body.products[0].order_id;
     var uuid = req.body.products[0].uuid;
     var total_price = req.body.products[0].total_price;
-    
+
     var verify = crypto.createVerify('sha1WithRSAEncryption');
 
     req.body.vouchers.forEach(function(voucher) {
@@ -188,6 +188,9 @@ app.post('/order', function(req,res) {
 
 });
 
+app.get('/api', function(req,res) {
+  res.send({"public_key": keys.public});
+});
 
 app.get('/client/:uuid/total', function(req, res) {
     var client_uuid = req.params.uuid;
@@ -203,7 +206,7 @@ app.get('/client/:uuid/total', function(req, res) {
                 }
                 else {
                     var total = 0;
-                    
+
                     results.forEach(function(result) {
 
                         var product = prodResults.find(function(element){
@@ -211,16 +214,16 @@ app.get('/client/:uuid/total', function(req, res) {
                         });
 
                         total += product.price * result.quantity;
-                        
+
                     });
 
                     res.send({total: total});
                 }
-            }); 
+            });
         }
     });
 
-}); 
+});
 
 
 function generateVoucher(model, type, user_id) {
@@ -241,7 +244,7 @@ function generateVoucher(model, type, user_id) {
     voucher.signature = sign.sign(keys.private,'base64');
 
     model.create(voucher, function(err,results) {
-    
+
     });
 }
 
