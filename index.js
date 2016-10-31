@@ -141,8 +141,8 @@ app.post('/order', function(req,res) {
         }
         else {
             console.log("not legit signature");
-            //res.send('Error validating signature');
-            //TODO: set user to black list
+            res.send('Error validating signature');
+            //TODO: add user to blacklist
             return;
         }
     });
