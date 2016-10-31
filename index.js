@@ -89,6 +89,23 @@ app.post('/register', function(req, res) {
 
 });
 
+app.post('/authenticate', function(req,res) {
+    req.models.client.one({uuid: req.body.uuid}, function(err, client) {
+        if(err) {
+            res.send({success: false});
+        } else {
+            client.comparePassword(req.body.password, function(err, isMatch) {
+                if(!err && isMatch) {
+                    res.send({success: true});
+                }
+                else {
+                    res.send({success: false});
+                }
+            });
+        }
+    });
+});
+
 app.get('/menu', function(req, res) {
     req.models.product.all(function(err,results){
         if(err) {
