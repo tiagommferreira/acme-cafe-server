@@ -11,6 +11,8 @@ var cp          = require('child_process');
 var assert      = require('assert');
 var fs          = require('fs');
 var crypto      = require('crypto');
+var _           = require('lodash');
+var async       = require('async');
 
 
 // gen pub priv key pair
@@ -34,7 +36,6 @@ function genKeys(cb){
 var keys;
 genKeys(function(result) {
     keys = JSON.parse(result);
-    console.log(keys);
 });
 
 
@@ -130,6 +131,74 @@ app.get('/order',function(req,res) {
   });
 });
 
+app.get('/order/:uuid', function(req, res) {
+    
+    req.models.order.find({user_id: req.params.uuid}, function(err, results) {
+        if(results.length == 0) {
+            res.send(results);
+        }
+        
+        var organized = [];
+        var groupedOrders = _.values(_.groupBy(results, 'order_id'));
+
+        var vouchersToFetch = [];
+        
+        _.forEach(groupedOrders, function(orderProducts) {
+            var currentOrder = {};
+            currentOrder.id = orderProducts[0].order_id;
+
+            vouchersToFetch.push(function(callback) {
+                req.models.voucher.find({user_id: req.params.uuid, order_id: currentOrder.id}, function(err, results) {
+                    if(err) {
+                        callback(true, null);
+                        return;
+                    }
+                
+                    var vouchers = [];
+                    _.forEach(results, function(voucher) {
+                        vouchers.push({id: voucher.voucher_id, name: voucher.name, type: voucher.type});
+                    });
+                    currentOrder.vouchers = vouchers;
+                    callback(null, "done");
+                });
+            });
+
+            //get the order produts from the order results
+            var products = [];
+            _.forEach(orderProducts, function(product) {
+                products.push({id: product.product_id, quantity: product.quantity});
+            });
+            currentOrder.products = products;
+
+            organized.push(currentOrder);
+        });
+
+        async.parallel(vouchersToFetch, function(err, results) {
+            if(err) {
+                res.send("Something went wrong");
+            }
+            else { 
+                res.send(organized);
+            }
+        });
+
+
+    });
+    
+});
+
+function getOrderVouchers(voucherModel, uuid, order_id) {
+    //get the order vouchers from the database
+    voucherModel.find({user_id: uuid, order_id: order_id}, function(err, results) {
+        var vouchers = [];
+        _.forEach(results, function(voucher) {
+            vouchers.push({id: voucher.voucher_id, name: voucher.name, type: voucher.type});
+        });
+        return vouchers;
+    });
+    
+}
+
 app.post('/order', function(req,res) {
     var order_id = req.body.products[0].order_id;
     var uuid = req.body.products[0].uuid;
@@ -150,9 +219,9 @@ app.post('/order', function(req,res) {
 
         if(verify.verify(keys.public, voucher.signature, 'base64')) {
             req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
-                results[0].order_id = voucher.order_id;
+                results[0].order_id = order_id;
                 results[0].save(function(err){
-
+                    
                 });
             });
         }

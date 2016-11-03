@@ -10,9 +10,11 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "async": "^2.1.2",
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
+    "lodash": "^4.16.6",
     "orm": "^3.1.0",
     "pg": "^6.1.0",
     "pg-hstore": "^2.3.2",
