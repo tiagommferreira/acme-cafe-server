@@ -132,17 +132,17 @@ app.get('/order',function(req,res) {
 });
 
 app.get('/order/:uuid', function(req, res) {
-    
+
     req.models.order.find({user_id: req.params.uuid}, function(err, results) {
         if(results.length == 0) {
             res.send(results);
         }
-        
+
         var organized = [];
         var groupedOrders = _.values(_.groupBy(results, 'order_id'));
 
         var vouchersToFetch = [];
-        
+
         _.forEach(groupedOrders, function(orderProducts) {
             var currentOrder = {};
             currentOrder.id = orderProducts[0].order_id;
@@ -153,7 +153,7 @@ app.get('/order/:uuid', function(req, res) {
                         callback(true, null);
                         return;
                     }
-                
+
                     var vouchers = [];
                     _.forEach(results, function(voucher) {
                         vouchers.push({id: voucher.voucher_id, name: voucher.name, type: voucher.type});
@@ -177,14 +177,14 @@ app.get('/order/:uuid', function(req, res) {
             if(err) {
                 res.send("Something went wrong");
             }
-            else { 
+            else {
                 res.send(organized);
             }
         });
 
 
     });
-    
+
 });
 
 function getOrderVouchers(voucherModel, uuid, order_id) {
@@ -196,8 +196,15 @@ function getOrderVouchers(voucherModel, uuid, order_id) {
         });
         return vouchers;
     });
-    
+
 }
+
+
+app.get('/voucher', function(req,res) {
+  req.models.voucher.all(function(err,results){
+    res.json(results)
+  });
+});
 
 app.post('/order', function(req,res) {
     var order_id = req.body.products[0].order_id;
@@ -221,7 +228,7 @@ app.post('/order', function(req,res) {
             req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
                 results[0].order_id = order_id;
                 results[0].save(function(err){
-                    
+
                 });
             });
         }
@@ -316,6 +323,8 @@ function generateVoucher(model, type, user_id) {
 
     });
 }
+
+
 
 app.listen(app.get('port'), function() {
   console.log('Server started: http://localhost:' + app.get('port') + '/');
