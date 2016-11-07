@@ -71,16 +71,33 @@ app.get('/', function(req, res) {
 });
 
 app.post('/client/block', function(req,res) {
-    req.models.client.one({uuid:req.body.uuid}, function (err,result) {
-        result.status = false;
-        result.save(function(err) {
-            if(err) {
-                res.json({"success": false});
-            } else {
-                res.json({"success": true});
-            }
+    var requests = [];
+
+    _.forEach(req.body.clients, function(client) {
+        requests.push(function(callback) {
+            req.models.client.one({uuid:client.uuid}, function (err,result) {
+                result.status = false;
+                result.save(function(err) {
+                    if(err) {
+                        callback(true, null);
+                    }
+                    else {
+                        callback(null, "done");
+                    }
+                });
+            });
         });
     });
+
+    async.parallel(requests, function(err, results) {
+        if(err) {
+            res.send("Something went wrong");
+        }
+        else {
+            res.send("Everything ok");
+        }
+    });
+
 });
 
 app.post('/register', function(req, res) {
