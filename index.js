@@ -70,6 +70,16 @@ app.get('/', function(req, res) {
     res.json({success: true});
 });
 
+app.post('/client/block', function(req,res) {
+    req.models.client.one({uuid:req.body.uuid}, function (err,result) {
+        result.status = false;
+        result.save(function(err) {
+            res.json(err);
+        });
+        res.json({"success": true});
+    });
+});
+
 app.post('/register', function(req, res) {
     var newClient = {
         username: req.body.username,
@@ -178,7 +188,7 @@ app.get('/order/:uuid', function(req, res) {
                         callback(null, "done");
                     });
                 });
-                
+
                 //products.push({id: product.product_id, quantity: product.quantity});
             });
             currentOrder.products = products;
