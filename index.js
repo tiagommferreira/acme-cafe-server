@@ -79,7 +79,6 @@ app.post('/client/block', function(req,res) {
             } else {
                 res.json({"success": true});
             }
-
         });
     });
 });

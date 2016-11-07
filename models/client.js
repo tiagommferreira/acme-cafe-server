@@ -16,23 +16,24 @@ var clientOptions = {
     hooks: {
         beforeSave: function(next) {
             var _this = this;
+            if(_this.uuid == null) {
+              _this.uuid = uuid.v1();
+              _this.pin = Math.floor(1000 + Math.random() * 9000);
+              _this.status = true;
 
-            _this.uuid = uuid.v1();
-            _this.pin = Math.floor(1000 + Math.random() * 9000);
-            _this.status = true;
-
-            bcrypt.genSalt(10, function (err, salt) {
-                if (err) {
-                    return next(err);
-                }
-                bcrypt.hash(_this.password, salt, null, function (err, hash) {
-                    if (err) {
-                        return next(err);
-                    }
-                    _this.password = hash;
-                    next();
-                });
-            });
+              bcrypt.genSalt(10, function (err, salt) {
+                  if (err) {
+                      return next(err);
+                  }
+                  bcrypt.hash(_this.password, salt, null, function (err, hash) {
+                      if (err) {
+                          return next(err);
+                      }
+                      _this.password = hash;
+                      next();
+                  });
+              });
+            }
         }
     },
     methods: {
