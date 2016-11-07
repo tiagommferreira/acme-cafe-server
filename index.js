@@ -74,9 +74,13 @@ app.post('/client/block', function(req,res) {
     req.models.client.one({uuid:req.body.uuid}, function (err,result) {
         result.status = false;
         result.save(function(err) {
-            res.json(err);
+            if(err) {
+                res.json({"success": false});
+            } else {
+                res.json({"success": true});
+            }
+
         });
-        res.json({"success": true});
     });
 });
 
