@@ -166,6 +166,7 @@ app.get('/order/:uuid', function(req, res) {
             //get the order produts from the order results
             var products = [];
             _.forEach(orderProducts, function(product) {
+                /*
                 queriesTodo.push(function(callback) {
                     if(err) {
                         callback(true, null);
@@ -176,7 +177,8 @@ app.get('/order/:uuid', function(req, res) {
                     });
                     callback(null, "done");
                 });
-                //products.push({id: product.product_id, quantity: product.quantity});
+                */
+                products.push({id: product.product_id, quantity: product.quantity});
             });
             currentOrder.products = products;
 
