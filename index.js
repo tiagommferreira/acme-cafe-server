@@ -237,100 +237,112 @@ app.get('/voucher', function(req,res) {
 });
 
 app.post('/order', function(req,res) {
-    var order_id = req.body.products[0].order_id;
-    var uuid = req.body.products[0].uuid;
-    var total_price = req.body.products[0].total_price;
+
+    var groupedProducts = _.groupBy(req.body.products, 'order_id');
+    var groupedVouchers = _.groupBy(req.body.vouchers, 'order_id');
 
     var verify = crypto.createVerify('sha1WithRSAEncryption');
 
-    req.body.vouchers.forEach(function(voucher) {
-        var toVerify = {
-            name: voucher.name,
-            type: voucher.type,
-            user_id: voucher.user_id,
-            order_id: null,
-            voucher_id: voucher.voucher_id,
-        }
+    var voucherQueries = [];
 
-        verify.update(JSON.stringify(toVerify));
+    //For each order
+    _.forEach(groupedVouchers, function(order) {
+        voucherQueries.push(function(callback) {
+            //check if the user is in the blacklist
+            req.models.client.one({uuid: order[0].user_id}, function(err, result) {
+                if(!err) {
+                    //The user is not in the blacklist
+                    if(result.status == true) {
+                        //For each voucher in the order
+                        _.forEach(order, function(voucher) {
+                            //verify if the voucher signature is valid
+                            var toVerify = {
+                                name: voucher.name,
+                                type: voucher.type,
+                                user_id: voucher.user_id,
+                                voucher_id: voucher.voucher_id,
+                            }
 
-        if(verify.verify(keys.public, voucher.signature, 'base64')) {
-            req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
-                results[0].order_id = order_id;
-                results[0].save(function(err){
+                            verify.update(JSON.stringify(toVerify));
 
-                });
+                            if(verify.verify(keys.public, voucher.signature, 'base64')) {
+                                //If the signature is valid, update the order_id in the database
+                                req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
+                                    results[0].order_id = voucher.order_id;
+                                    results[0].save(function(err){
+                                        callback(null, true);
+                                    });
+                                });
+                            }
+                            else {
+                                //Put the user in the blacklist
+                                req.models.client.one({uuid:voucher.user_id}, function (err,result) {
+                                    result.status = false;
+                                    result.save(function(err) {
+                                        callback(true, null);
+                                    });
+                                });
+                            }
+
+                        });
+                    }
+                    //The user is in the blacklist
+                    else {
+                        callback(true, null);
+                    }
+                }
             });
+        });
+
+    });
+
+    //execute all the requests
+    async.parallel(voucherQueries, function(err, results) {
+        if(err) {
+            res.send({result:"user banned"});
         }
         else {
-            console.log("not legit signature");
-            res.send('Error validating signature');
-            //TODO: add user to blacklist
-            return;
+            //If all the vouchers are valid, then go through the produts
+            
+            //For each order
+            _.forEach(groupedProducts, function(order) {
+                //If the order total price is more than 20, generate a random voucher
+                if(order[0].total_price > 20) {
+                    generateVoucher(req.models.voucher, Math.floor(Math.random()*(2-1+1)+1), order[0].uuid);
+                }
+
+                //For each product
+                _.forEach(order, function(product) {
+                    var newOrder = {
+                        user_id: product.uuid,
+                        product_id: product.product_id,
+                        order_id: product.order_id,
+                        quantity: product.quantity
+                    }
+                    req.models.order.create(newOrder,function(err,results){
+                        
+                    });
+                });
+
+                //Send the result
+                res.send({result:"order saved"});
+            });
         }
+        
     });
-
-    req.body.products.forEach(function(orderItem){
-        var newOrder = {
-            user_id: orderItem.uuid,
-            product_id: orderItem.product_id,
-            order_id: orderItem.order_id,
-            quantity: orderItem.quantity
-        }
-        req.models.order.create(newOrder,function(err,results){
-            if(err) {
-                res.send('Something went wrong');
-            }
-            else {
-            }
-        });
-    });
-
-    if(total_price > 20) {
-        generateVoucher(req.models.voucher, Math.floor(Math.random()*(2-1+1)+1), uuid);
-    }
-
-    res.send({success: true});
 
 });
+
+app.get("/cenas", function(req, res) {
+    console.log(keys.public);
+    const sign = crypto.createSign('sha1WithRSAEncryption');
+    sign.update("memes");
+    res.send(sign.sign(keys.private, 'base64'));    
+})
 
 app.get('/api', function(req,res) {
   res.send({"public_key": keys.public});
 });
-
-app.get('/client/:uuid/total', function(req, res) {
-    var client_uuid = req.params.uuid;
-
-    req.models.order.find({user_id: client_uuid}, function(err, results){
-        if(err) {
-            res.send(err);
-        }
-        else {
-            req.models.product.all(function(prodErr, prodResults){
-                if(prodErr) {
-                    res.send(prodErr);
-                }
-                else {
-                    var total = 0;
-
-                    results.forEach(function(result) {
-
-                        var product = prodResults.find(function(element){
-                            return element.id === result.product_id;
-                        });
-
-                        total += product.price * result.quantity;
-
-                    });
-
-                    res.send({total: total});
-                }
-            });
-        }
-    });
-
-});
-
 
 function generateVoucher(model, type, user_id) {
     const sign = crypto.createSign('sha1WithRSAEncryption');
@@ -340,14 +352,14 @@ function generateVoucher(model, type, user_id) {
     var voucher = {
         name: name,
         type: type,
-        user_id: user_id,
-        order_id: null,
+        user_id: user_id
     }
 
-    voucher.voucher_id = Math.floor(Math.random()*(1000-1+1)+1) + Math.floor(Math.random()*(500-100+1)+100);;
-
+    voucher.voucher_id = Math.floor(Math.random()*(1000-1+1)+1) + Math.floor(Math.random()*(500-100+1)+100);
+    
     sign.update(JSON.stringify(voucher));
     voucher.signature = sign.sign(keys.private,'base64');
+    voucher.order_id = null;
 
     model.create(voucher, function(err,results) {
 
