@@ -166,19 +166,20 @@ app.get('/order/:uuid', function(req, res) {
             //get the order produts from the order results
             var products = [];
             _.forEach(orderProducts, function(product) {
-                /*
+                console.log(currentOrder.id);
                 queriesTodo.push(function(callback) {
                     if(err) {
                         callback(true, null);
                         return;
                     }
                     req.models.product.one({id: product.product_id}, function(err, result) {
+                        console.log(result.name);
                         products.push({id: result.id, name: result.name, price: result.price, quantity: product.quantity});
+                        callback(null, "done");
                     });
-                    callback(null, "done");
                 });
-                */
-                products.push({id: product.product_id, quantity: product.quantity});
+                
+                //products.push({id: product.product_id, quantity: product.quantity});
             });
             currentOrder.products = products;
 
