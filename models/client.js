@@ -14,9 +14,8 @@ var clientModel = {
 
 var clientOptions = {
     hooks: {
-        beforeSave: function(next) {
+        beforeCreate: function(next) {
             var _this = this;
-            if(_this.uuid == null) {
               _this.uuid = uuid.v1();
               _this.pin = Math.floor(1000 + Math.random() * 9000);
               _this.status = true;
@@ -33,7 +32,7 @@ var clientOptions = {
                       next();
                   });
               });
-            }
+
         }
     },
     methods: {
