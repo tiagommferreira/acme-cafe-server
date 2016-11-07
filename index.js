@@ -141,13 +141,13 @@ app.get('/order/:uuid', function(req, res) {
         var organized = [];
         var groupedOrders = _.values(_.groupBy(results, 'order_id'));
 
-        var vouchersToFetch = [];
+        var queriesTodo = [];
 
         _.forEach(groupedOrders, function(orderProducts) {
             var currentOrder = {};
             currentOrder.id = orderProducts[0].order_id;
 
-            vouchersToFetch.push(function(callback) {
+            queriesTodo.push(function(callback) {
                 req.models.voucher.find({user_id: req.params.uuid, order_id: currentOrder.id}, function(err, results) {
                     if(err) {
                         callback(true, null);
@@ -166,14 +166,24 @@ app.get('/order/:uuid', function(req, res) {
             //get the order produts from the order results
             var products = [];
             _.forEach(orderProducts, function(product) {
-                products.push({id: product.product_id, quantity: product.quantity});
+                queriesTodo.push(function(callback) {
+                    if(err) {
+                        callback(true, null);
+                        return;
+                    }
+                    req.models.product.one({id: product.product_id}, function(err, result) {
+                        products.push({id: result.id, name: result.name, price: result.price, quantity: product.quantity});
+                    });
+                    callback(null, "done");
+                });
+                //products.push({id: product.product_id, quantity: product.quantity});
             });
             currentOrder.products = products;
 
             organized.push(currentOrder);
         });
 
-        async.parallel(vouchersToFetch, function(err, results) {
+        async.parallel(queriesTodo, function(err, results) {
             if(err) {
                 res.send("Something went wrong");
             }
@@ -186,19 +196,6 @@ app.get('/order/:uuid', function(req, res) {
     });
 
 });
-
-function getOrderVouchers(voucherModel, uuid, order_id) {
-    //get the order vouchers from the database
-    voucherModel.find({user_id: uuid, order_id: order_id}, function(err, results) {
-        var vouchers = [];
-        _.forEach(results, function(voucher) {
-            vouchers.push({id: voucher.voucher_id, name: voucher.name, type: voucher.type});
-        });
-        return vouchers;
-    });
-
-}
-
 
 app.get('/voucher', function(req,res) {
   req.models.voucher.all(function(err,results){
