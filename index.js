@@ -254,6 +254,7 @@ app.post('/order', function(req,res) {
                     //The user is not in the blacklist
                     if(result.status == true) {
                         //For each voucher in the order
+                        var wasError = false;
                         _.forEach(order, function(voucher) {
                             //verify if the voucher signature is valid
                             var toVerify = {
@@ -266,34 +267,36 @@ app.post('/order', function(req,res) {
                             verify.update(JSON.stringify(toVerify));
 
                             if(verify.verify(keys.public, voucher.signature, 'base64')) {
-                                //callback(null, "done");
                                 //If the signature is valid, update the order_id in the database
                                 req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
                                     results[0].order_id = voucher.order_id;
                                     results[0].save(function(err){
-                                        if(!err){
-                                            callback(null, true);
-                                            return;
-                                        }
-                                            
+                                        
                                     });
                                 });
                                 
                             }
                             else {
-                                callback(true, null);
+                                wasError = true;
                                 console.log("signature not legit");
                                 //Put the user in the blacklist
                                 req.models.client.one({uuid:voucher.user_id}, function (err,result) {
                                     console.log("user is now in the blacklist");
                                     result.status = false;
                                     result.save(function(err) {
-                                        return;
+                                        
                                     });
                                 });
                             }
 
                         });
+                        if(wasError) {
+                            callback(true, null);
+                        }
+                        else {
+                            callback(null, "done");
+                        }
+
                     }
                     //The user is in the blacklist
                     else {
