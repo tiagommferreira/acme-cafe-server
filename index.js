@@ -15,6 +15,8 @@ var _           = require('lodash');
 var async       = require('async');
 
 
+const verify = crypto.createVerify('sha1WithRSAEncryption');
+
 // gen pub priv key pair
 function genKeys(cb){
     // gen private
@@ -261,7 +263,6 @@ app.post('/order', function(req,res) {
                                 voucher_id: voucher.voucher_id,
                             }
 
-                            var verify = crypto.createVerify('sha1WithRSAEncryption');
                             verify.update(JSON.stringify(toVerify));
 
                             if(verify.verify(keys.public, voucher.signature, 'base64')) {
