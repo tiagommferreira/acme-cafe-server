@@ -274,6 +274,7 @@ app.post('/order', function(req,res) {
                                         //callback(null, true);
                                     });
                                 });
+                                callback(null, "done");
                             }
                             else {
                                 console.log("signature not legit");
@@ -335,7 +336,7 @@ app.post('/order', function(req,res) {
 
                 
             });
-            
+
             //Send the result
             res.send({result:"order saved"});
         }
