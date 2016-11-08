@@ -245,6 +245,8 @@ app.post('/order', function(req,res) {
 
     var voucherQueries = [];
 
+    console.log(req.body);
+
     //For each order
     _.forEach(groupedVouchers, function(order) {
         voucherQueries.push(function(callback) {
