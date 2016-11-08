@@ -266,7 +266,7 @@ app.post('/order', function(req,res) {
                             verify.update(JSON.stringify(toVerify));
 
                             if(verify.verify(keys.public, voucher.signature, 'base64')) {
-                                console.log("signature legit");
+                                callback(null, "done");
                                 //If the signature is valid, update the order_id in the database
                                 req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
                                     results[0].order_id = voucher.order_id;
@@ -274,16 +274,17 @@ app.post('/order', function(req,res) {
                                         //callback(null, true);
                                     });
                                 });
-                                callback(null, "done");
+                                
                             }
                             else {
+                                callback(true, null);
                                 console.log("signature not legit");
                                 //Put the user in the blacklist
                                 req.models.client.one({uuid:voucher.user_id}, function (err,result) {
                                     console.log("user is now in the blacklist");
                                     result.status = false;
                                     result.save(function(err) {
-                                        callback(true, null);
+                                        
                                     });
                                 });
                             }
