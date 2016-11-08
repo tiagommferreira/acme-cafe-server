@@ -9,6 +9,7 @@ var clientModel = {
     password:   {type: 'text'},
     pin:        {type: 'integer', size: 4},
     creditcard: {type: 'text'},
+    total_spent:{type: 'number'},            
     status:     {type: 'boolean'}
 }
 
@@ -16,6 +17,7 @@ var clientOptions = {
     hooks: {
         beforeCreate: function(next) {
             var _this = this;
+            _this.total_spent = 0;
               _this.uuid = uuid.v1();
               _this.pin = Math.floor(1000 + Math.random() * 9000);
               _this.status = true;

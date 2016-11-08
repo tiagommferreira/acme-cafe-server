@@ -311,6 +311,8 @@ app.post('/order', function(req,res) {
                     generateVoucher(req.models.voucher, Math.floor(Math.random()*(2-1+1)+1), order[0].uuid);
                 }
 
+                checkUserTotalSpent(req.models.client, req.models.voucher, order[0].uuid, order[0].total_price);
+
                 //For each product
                 _.forEach(order, function(product) {
                     var newOrder = {
@@ -347,7 +349,15 @@ app.get('/api', function(req,res) {
 function generateVoucher(model, type, user_id) {
     const sign = crypto.createSign('sha1WithRSAEncryption');
 
-    var name = type === 1 ? "Free Popcorn" : "Free Coffee";
+    if(type === 1) {
+        name = "Free Popcorn";
+    }
+    else if(type === 2) {
+        name = "Free Coffee";
+    }
+    else if(type === 3) {
+        name = "5% Discount";
+    }
 
     var voucher = {
         name: name,
@@ -363,6 +373,26 @@ function generateVoucher(model, type, user_id) {
 
     model.create(voucher, function(err,results) {
 
+    });
+}
+
+function checkUserTotalSpent(clientModel, voucherModel, user_uuid, moneyToAdd) {
+    clientModel.one({}, function(err, result) {
+        if(!err) {
+            if(result.total_spent + moneyToAdd >= 100) {
+                generateVoucher(voucherModel, 3, user_uuid);
+                result.total_spent = 0;
+                result.save(function(err) {
+                    
+                });
+            }
+            else {
+                result.total_spent += moneyToAdd;
+                result.save(function(err) {
+
+                });
+            }
+        }
     });
 }
 
