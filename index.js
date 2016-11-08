@@ -266,6 +266,7 @@ app.post('/order', function(req,res) {
                             verify.update(JSON.stringify(toVerify));
 
                             if(verify.verify(keys.public, voucher.signature, 'base64')) {
+                                console.log("signature legit");
                                 //If the signature is valid, update the order_id in the database
                                 req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
                                     results[0].order_id = voucher.order_id;
@@ -275,8 +276,10 @@ app.post('/order', function(req,res) {
                                 });
                             }
                             else {
+                                console.log("signature not legit");
                                 //Put the user in the blacklist
                                 req.models.client.one({uuid:voucher.user_id}, function (err,result) {
+                                    console.log("user is now in the blacklist");
                                     result.status = false;
                                     result.save(function(err) {
                                         callback(true, null);
@@ -288,6 +291,7 @@ app.post('/order', function(req,res) {
                     }
                     //The user is in the blacklist
                     else {
+                        console.log("user is already in the blacklist");
                         callback(true, null);
                     }
                 }
@@ -296,12 +300,15 @@ app.post('/order', function(req,res) {
 
     });
 
+
     //execute all the requests
     async.parallel(voucherQueries, function(err, results) {
         if(err) {
+            console.log("erro nalgum voucher");
             res.send({result:"user banned"});
         }
         else {
+            console.log("nao deu erro nos vouchers");
             //If all the vouchers are valid, then go through the produts
             
             //For each order
