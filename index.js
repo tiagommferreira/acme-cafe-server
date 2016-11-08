@@ -266,12 +266,16 @@ app.post('/order', function(req,res) {
                             verify.update(JSON.stringify(toVerify));
 
                             if(verify.verify(keys.public, voucher.signature, 'base64')) {
-                                callback(null, "done");
+                                //callback(null, "done");
                                 //If the signature is valid, update the order_id in the database
                                 req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
                                     results[0].order_id = voucher.order_id;
                                     results[0].save(function(err){
-                                        //callback(null, true);
+                                        if(!err){
+                                            callback(null, true);
+                                            return;
+                                        }
+                                            
                                     });
                                 });
                                 
@@ -284,7 +288,7 @@ app.post('/order', function(req,res) {
                                     console.log("user is now in the blacklist");
                                     result.status = false;
                                     result.save(function(err) {
-                                        
+                                        return;
                                     });
                                 });
                             }
@@ -295,6 +299,7 @@ app.post('/order', function(req,res) {
                     else {
                         console.log("user is already in the blacklist");
                         callback(true, null);
+                        return;
                     }
                 }
             });
