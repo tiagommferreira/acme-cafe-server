@@ -241,11 +241,7 @@ app.post('/order', function(req,res) {
     var groupedProducts = _.groupBy(req.body.products, 'order_id');
     var groupedVouchers = _.groupBy(req.body.vouchers, 'order_id');
 
-    var verify = crypto.createVerify('sha1WithRSAEncryption');
-
     var voucherQueries = [];
-
-    console.log(verify);
 
     //For each order
     _.forEach(groupedVouchers, function(order) {
@@ -265,6 +261,7 @@ app.post('/order', function(req,res) {
                                 voucher_id: voucher.voucher_id,
                             }
 
+                            var verify = crypto.createVerify('sha1WithRSAEncryption');
                             verify.update(JSON.stringify(toVerify));
 
                             if(verify.verify(keys.public, voucher.signature, 'base64')) {
