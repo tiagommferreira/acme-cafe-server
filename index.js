@@ -271,7 +271,7 @@ app.post('/order', function(req,res) {
                                 req.models.voucher.find({voucher_id: voucher.voucher_id}, function(err, results){
                                     results[0].order_id = voucher.order_id;
                                     results[0].save(function(err){
-                                        callback(null, true);
+                                        //callback(null, true);
                                     });
                                 });
                             }
