@@ -333,9 +333,11 @@ app.post('/order', function(req,res) {
                     });
                 });
 
-                //Send the result
-                res.send({result:"order saved"});
+                
             });
+            
+            //Send the result
+            res.send({result:"order saved"});
         }
         
     });
