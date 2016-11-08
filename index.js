@@ -341,7 +341,7 @@ app.get("/cenas", function(req, res) {
 })
 
 app.get('/api', function(req,res) {
-  res.send({"public_key": keys.public});
+  res.send({"public_key": new Buffer(keys.public).toString('base64')});
 });
 
 function generateVoucher(model, type, user_id) {
