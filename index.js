@@ -167,64 +167,64 @@ app.get('/order/:uuid', function(req, res) {
         if(results.length == 0) {
             res.send(results);
         }
+        else {
+            var organized = [];
+            var groupedOrders = _.values(_.groupBy(results, 'order_id'));
 
-        var organized = [];
-        var groupedOrders = _.values(_.groupBy(results, 'order_id'));
+            var queriesTodo = [];
 
-        var queriesTodo = [];
+            _.forEach(groupedOrders, function(orderProducts) {
+                var currentOrder = {};
+                currentOrder.id = orderProducts[0].order_id;
 
-        _.forEach(groupedOrders, function(orderProducts) {
-            var currentOrder = {};
-            currentOrder.id = orderProducts[0].order_id;
-
-            queriesTodo.push(function(callback) {
-                req.models.voucher.find({user_id: req.params.uuid, order_id: currentOrder.id}, function(err, results) {
-                    if(err) {
-                        callback(true, null);
-                        return;
-                    }
-
-                    var vouchers = [];
-                    _.forEach(results, function(voucher) {
-                        vouchers.push({id: voucher.voucher_id, name: voucher.name, type: voucher.type});
-                    });
-                    currentOrder.vouchers = vouchers;
-                    callback(null, "done");
-                });
-            });
-
-            //get the order produts from the order results
-            var products = [];
-            _.forEach(orderProducts, function(product) {
-                console.log(currentOrder.id);
                 queriesTodo.push(function(callback) {
-                    if(err) {
-                        callback(true, null);
-                        return;
-                    }
-                    req.models.product.one({id: product.product_id}, function(err, result) {
-                        console.log(result.name);
-                        products.push({id: result.id, name: result.name, price: result.price, quantity: product.quantity});
+                    req.models.voucher.find({user_id: req.params.uuid, order_id: currentOrder.id}, function(err, results) {
+                        if(err) {
+                            callback(true, null);
+                            return;
+                        }
+
+                        var vouchers = [];
+                        _.forEach(results, function(voucher) {
+                            vouchers.push({id: voucher.voucher_id, name: voucher.name, type: voucher.type});
+                        });
+                        currentOrder.vouchers = vouchers;
                         callback(null, "done");
                     });
                 });
 
-                //products.push({id: product.product_id, quantity: product.quantity});
+                //get the order produts from the order results
+                var products = [];
+                _.forEach(orderProducts, function(product) {
+                    console.log(currentOrder.id);
+                    queriesTodo.push(function(callback) {
+                        if(err) {
+                            callback(true, null);
+                            return;
+                        }
+                        req.models.product.one({id: product.product_id}, function(err, result) {
+                            console.log(result.name);
+                            products.push({id: result.id, name: result.name, price: result.price, quantity: product.quantity});
+                            callback(null, "done");
+                        });
+                    });
+
+                    //products.push({id: product.product_id, quantity: product.quantity});
+                });
+                currentOrder.products = products;
+
+                organized.push(currentOrder);
             });
-            currentOrder.products = products;
 
-            organized.push(currentOrder);
-        });
-
-        async.parallel(queriesTodo, function(err, results) {
-            if(err) {
-                res.send("Something went wrong");
-            }
-            else {
-                res.send(organized);
-            }
-        });
-
+            async.parallel(queriesTodo, function(err, results) {
+                if(err) {
+                    res.send("Something went wrong");
+                }
+                else {
+                    res.send(organized);
+                }
+            });   
+        }
 
     });
 
