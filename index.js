@@ -101,11 +101,15 @@ app.post('/client/block', function(req,res) {
 });
 
 app.post('/register', function(req, res) {
+    var dateString = String(req.body.cc_year + "-" + req.body.cc_month + "-" + req.body.cc_day);
+    var date = new Date(dateString);
+
     var newClient = {
         username: req.body.username,
         name: req.body.name,
         password: req.body.password,
         creditcard: req.body.creditcard,
+        cc_date: date
     }
 
     req.models.client.create(newClient, function(err, results) {
@@ -243,8 +247,6 @@ app.post('/order', function(req,res) {
 
     var voucherQueries = [];
 
-    console.log(req.body);
-
     //For each order
     _.forEach(groupedVouchers, function(order) {
         voucherQueries.push(function(callback) {
@@ -252,9 +254,10 @@ app.post('/order', function(req,res) {
             req.models.client.one({uuid: order[0].user_id}, function(err, result) {
                 if(!err) {
                     //The user is not in the blacklist
-                    if(result.status == true) {
+                    if(result && result.status == true) {
                         //For each voucher in the order
                         var wasError = false;
+
                         _.forEach(order, function(voucher) {
                             //verify if the voucher signature is valid
                             var toVerify = {
@@ -281,15 +284,15 @@ app.post('/order', function(req,res) {
                                 console.log("signature not legit");
                                 //Put the user in the blacklist
                                 req.models.client.one({uuid:voucher.user_id}, function (err,result) {
-                                    console.log("user is now in the blacklist");
                                     result.status = false;
                                     result.save(function(err) {
-                                        
+                                        console.log("user is now in the blacklist");   
                                     });
                                 });
                             }
 
                         });
+                        
                         if(wasError) {
                             callback(true, null);
                         }
@@ -314,40 +317,69 @@ app.post('/order', function(req,res) {
     //execute all the requests
     async.parallel(voucherQueries, function(err, results) {
         if(err) {
-            console.log("erro nalgum voucher");
             res.send({result:"user banned"});
         }
         else {
-            console.log("nao deu erro nos vouchers");
             //If all the vouchers are valid, then go through the produts
             
+            var queriesProducts = [];
             //For each order
             _.forEach(groupedProducts, function(order) {
-                //If the order total price is more than 20, generate a random voucher
-                if(order[0].total_price > 20) {
-                    generateVoucher(req.models.voucher, Math.floor(Math.random()*(2-1+1)+1), order[0].uuid);
-                }
 
-                checkUserTotalSpent(req.models.client, req.models.voucher, order[0].uuid, order[0].total_price);
+                queriesProducts.push(function(callback) {
+                    req.models.client.one({uuid: order[0].uuid}, function(err, result) {
+                        //user credit card info
+                        var ccDate = new Date(result.cc_date);
+                        var cc = result.creditcard;
 
-                //For each product
-                _.forEach(order, function(product) {
-                    var newOrder = {
-                        user_id: product.uuid,
-                        product_id: product.product_id,
-                        order_id: product.order_id,
-                        quantity: product.quantity
-                    }
-                    req.models.order.create(newOrder,function(err,results){
-                        
+                        //If the user has an invalid CC then ban him
+                        if(cc.length < 16 || cc.length > 16 || ccDate < new Date()) {
+                            req.models.client.one({uuid:result.uuid}, function (err,result) {
+                                result.status = false;
+                                result.save(function(err) {
+                                    console.log("user is now in the blacklist");   
+                                });
+                            });
+                            callback(true, null);
+                        }
+                        else {
+                            //If the order total price is more than 20, generate a random voucher
+                            if(order[0].total_price > 20) {
+                                generateVoucher(req.models.voucher, Math.floor(Math.random()*(2-1+1)+1), order[0].uuid);
+                            }
+
+                            checkUserTotalSpent(req.models.client, req.models.voucher, order[0].uuid, order[0].total_price);
+
+                            //For each product
+                            _.forEach(order, function(product) {
+                                var newOrder = {
+                                    user_id: product.uuid,
+                                    product_id: product.product_id,
+                                    order_id: product.order_id,
+                                    quantity: product.quantity
+                                }
+                                req.models.order.create(newOrder,function(err,results){
+                                    
+                                });
+                            });
+                            callback(null, "done");
+                        }
                     });
                 });
 
-                
             });
 
-            //Send the result
-            res.send({result:"order saved"});
+            async.parallel(queriesProducts, function(err, result) {
+                if(err) {
+                    res.send({result:"user banned"});
+                }
+                else {
+                    //Send the result
+                    res.send({result:"order saved"});
+                }
+            });
+
+            
         }
         
     });

@@ -9,6 +9,7 @@ var clientModel = {
     password:   {type: 'text'},
     pin:        {type: 'integer', size: 4},
     creditcard: {type: 'text'},
+    cc_date:    {type: 'date'},
     total_spent:{type: 'number'},            
     status:     {type: 'boolean'}
 }
